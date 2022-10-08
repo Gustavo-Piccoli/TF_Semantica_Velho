@@ -215,40 +215,40 @@ let rec typeinfer (tenv:tenv) (e:expr) : tipo =
 
   (* extensões Trabalho Final, iguais as do prof *)
        
-  | Assign(e1,e2) -> 
+  | Asg(e1,e2) -> 
       let t1 = typeinfer tenv e1 in
       let t2 = typeinfer tenv e2 in 
       (match t1 with 
-        TyRef(t) -> if t = t2 then TyUnit else raise (TypeError "tipo do LHS e RHS diferentes ")   
-      | _ -> raise (TypeError "Lado esquerdo da atribuicao nao eh do tipo ref" ))
+         TyRef(t) -> if t = t2 then TyUnit else raise (TypeError "tipo do LHS e RHS diferentes ")   
+       | _ -> raise (TypeError "Lado esquerdo da atribuicao nao eh do tipo ref" ))
 
 
-  | DRef (e1) ->
-    let t1 = typeinfer tenv e1 in 
-    (match t1 with
-      TyRef t -> t
-    | _ -> raise (TypeError "Operando de DRef nao eh do tipo ref" ))
+  | Dref (e1) ->
+      let t1 = typeinfer tenv e1 in 
+      (match t1 with
+         TyRef t -> t
+       | _ -> raise (TypeError "Operando de DRef nao eh do tipo ref" ))
 
 
   | New (e1) ->
-    let t1 = typeinfer tenv e1 in 
-    TyRef(t1)    
+      let t1 = typeinfer tenv e1 in 
+      TyRef(t1)    
 
 
   | Seq (e1,e2) -> 
-    let t1 = typeinfer tenv e1 in
-    let t2 = typeinfer tenv e2 in 
-    if t1 = TyUnit then t2
-    else raise (TypeError "tipo do LHS e RHS diferentes") 
+      let t1 = typeinfer tenv e1 in
+      let t2 = typeinfer tenv e2 in 
+      if t1 = TyUnit then t2
+      else raise (TypeError "tipo do LHS e RHS diferentes") 
 
 
   | Whl (e1,e2) -> 
-    let t1 = typeinfer tenv e1 in
-    let t2 = typeinfer tenv e2 in 
-    if t1 = TyBool then
-      if t2 = TyUnit then TyUnit
-      else raise (TypeError "Expressao do While nao eh do tipo Unit")
-    else raise (TypeError "Condicao do laco nao eh bool")
+      let t1 = typeinfer tenv e1 in
+      let t2 = typeinfer tenv e2 in 
+      if t1 = TyBool then
+        if t2 = TyUnit then TyUnit
+        else raise (TypeError "Expressao do While nao eh do tipo Unit")
+      else raise (TypeError "Condicao do laco nao eh bool")
 
 
   | Skip -> TyUnit
@@ -277,10 +277,10 @@ let update_store s (l,v) =
     match s with
       [] -> None
     | (l', v') :: pairs -> 
-      if l=l' 
-      then Some (front @ ((l,v) :: pairs)) 
-      else update_store' ((l',v') :: front) pairs (l,v) in
-update_store' [] s (l,v)
+        if l=l' 
+        then Some (front @ ((l,v) :: pairs)) 
+        else update_store' ((l',v') :: front) pairs (l,v) in
+  update_store' [] s (l,v)
 
 
 type store = (loc * valor) list
@@ -404,56 +404,56 @@ let rec eval (renv:renv) (e:expr) : valor =
   (* extensões Trabalho Final, iguais as do prof *)
 
   | Seq (e1,e2) ->
-    let (v1,s1) = eval renv (e1,s) in
-    let (v2,s2) = eval renv (e2,s1) in
+      let (v1,s1) = eval renv (e1,s) in
+      let (v2,s2) = eval renv (e2,s1) in
       (match v1 with
-        VSkip -> (v2,s2)
-      | _ -> raise BugTypeInfer)
+         VSkip -> (v2,s2)
+       | _ -> raise BugTypeInfer)
 
   
   | Whl (e1, e2) ->
-    let (v1,s1) = eval renv (e1,s) in
-    (match v1 with
-      VBool false -> (VSkip, s1)
-    | VBool true ->
-        let (v2,s2) = eval renv (e2,s1) in
-        (match v2 with
-          VSkip -> eval renv (Whl(e1,e2),s2)
-        | _ -> raise BugTypeInfer)
-    | _ -> raise BugTypeInfer)
+      let (v1,s1) = eval renv (e1,s) in
+      (match v1 with
+         VBool false -> (VSkip, s1)
+       | VBool true ->
+           let (v2,s2) = eval renv (e2,s1) in
+           (match v2 with
+              VSkip -> eval renv (Whl(e1,e2),s2)
+            | _ -> raise BugTypeInfer)
+       | _ -> raise BugTypeInfer)
 
 
   | Skip -> (VSkip, s)
 
 
   | New (e1) ->
-    let (v1,s1) = eval renv (e1, s) in
-    (match s1 with
-      [] -> (Vloc, (/,v1)::s1)
-    | (l,v) :: pairs ->
-      let lnew = l (*???*) in
-      (Vloc lnew, (lnew, v1) :: s1))
+      let (v1,s1) = eval renv (e1, s) in
+      (match s1 with
+         [] -> (Vloc, (/,v1)::s1)
+       | (l,v) :: pairs ->
+           let lnew = l (*???*) in
+           (Vloc lnew, (lnew, v1) :: s1))
 
 
   | Asg (e1,e2) ->
-    let (v1,s1) = eval renv (e1,s) in
-    let (v2,s2) = eval renv (e2, s1) in
-    (match v1 with
-      Vloc l ->
-      (match update_store s2 (l,v2) with 
-        None -> failwith ("Erro na atribuicao: endereco " (*??*) )
-      | Some s3 -> (VSkip, s3))
-    | _ -> raise BugTypeInfer)
+      let (v1,s1) = eval renv (e1,s) in
+      let (v2,s2) = eval renv (e2, s1) in
+      (match v1 with
+         Vloc l ->
+           (match update_store s2 (l,v2) with 
+              None -> failwith ("Erro na atribuicao: endereco " (*??*) )
+            | Some s3 -> (VSkip, s3))
+       | _ -> raise BugTypeInfer)
 
 
   | Dref (e1) ->
-    let (v1,s1) = eval renv (e1,s) in
-    (match v1 with
-      Vloc l ->
-      (match lookup_store s1 l with
-        Some v -> (v,s1)
-      | None -> raise BugTypeInfer)
-    | _ -> raise BugTypeInfer)
+      let (v1,s1) = eval renv (e1,s) in
+      (match v1 with
+         Vloc l ->
+           (match lookup_store s1 l with
+              Some v -> (v,s1)
+            | None -> raise BugTypeInfer)
+       | _ -> raise BugTypeInfer)
 
                   
 (* função auxiliar que converte tipo para string *)
@@ -537,11 +537,11 @@ let tst2 = Let("x", TyInt, Num(2), e1)
 
   
     (* let x:int = 10
-       in let f: int --> int = fn y:int => y + x
-          in let x:int  = 25
-             in f 100
+in let f: int --> int = fn y:int => y + x
+in let x:int  = 25
+in f 100
            
-     do tipo int avalia para 110 
+do tipo int avalia para 110 
 *)
 
 let e3 = Let("x", TyInt, Num 25, App(Var "f", Num 100))
@@ -557,13 +557,13 @@ let tst3 = Let("x", TyInt, Num 10, e2)
 
    let rec pow (x:int) (y:int) : int = 
                   if y = 0 then 1 else x * (pow x (y-1))  
-   in (pow 3) 4 
-     
-     sem açucar sintático:
-
-   let rec pow: int -> (int --> int) = 
-fn x:int => fn y:int => if y = 0 then 1 else x * (pow x (y-1)) 
 in (pow 3) 4 
+     
+  sem açucar sintático:
+
+     let rec pow: int -> (int --> int) = 
+       fn x:int => fn y:int => if y = 0 then 1 else x * (pow x (y-1)) 
+     in (pow 3) 4 
      
 do tipo int avalia para  81
 
