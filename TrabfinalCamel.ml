@@ -23,7 +23,10 @@ type tipo =
         (* tipos do Trabalho Final, iguais ao do professor *)      
   | TyRef of tipo
   | TyUnit            
-  
+    
+    (* expressões da linguagem L1 do Trabalho Final *)   
+
+type loc = TyInt
   
 (* expressões da linguagem L1 *)
 
@@ -499,7 +502,7 @@ let int_bse (e:expr) : unit =
   | BugParser     ->  print_string "corrigir bug no parser para let rec"
                         
 
-
+                        (*
 
  (* +++++++++++++++++++++++++++++++++++++++*)
  (*                TESTES                  *)
@@ -516,11 +519,11 @@ let int_bse (e:expr) : unit =
     do tipo int , avalia para 12 
 *)
 
-let e'' = Let("x", TyInt, Num 5, App(Var "foo", Num 10))
+                          let e'' = Let("x", TyInt, Num 5, App(Var "foo", Num 10))
 
-let e'  = Let("foo", TyFn(TyInt,TyInt), Fn("y", TyInt, Binop(Sum, Var "x", Var "y")), e'')
+                          let e'  = Let("foo", TyFn(TyInt,TyInt), Fn("y", TyInt, Binop(Sum, Var "x", Var "y")), e'')
 
-let tst = Let("x", TyInt, Num(2), e') 
+                          let tst = Let("x", TyInt, Num(2), e') 
     
     (*
      let x:int = 2 
@@ -532,11 +535,11 @@ let tst = Let("x", TyInt, Num(2), e')
 *)
 
 
-let e2 = Let("x", TyInt, Num 5, Var "foo")
+                          let e2 = Let("x", TyInt, Num 5, Var "foo")
 
-let e1  = Let("foo", TyFn(TyInt,TyInt), Fn("y", TyInt, Binop(Sum, Var "x", Var "y")), e2)
+                          let e1  = Let("foo", TyFn(TyInt,TyInt), Fn("y", TyInt, Binop(Sum, Var "x", Var "y")), e2)
 
-let tst2 = Let("x", TyInt, Num(2), e1) 
+                          let tst2 = Let("x", TyInt, Num(2), e1) 
 
 
   
@@ -546,13 +549,13 @@ in let x:int  = 25
 in f 100
            
 do tipo int avalia para 110 
-*)
+                          *)
 
-let e3 = Let("x", TyInt, Num 25, App(Var "f", Num 100))
+                          let e3 = Let("x", TyInt, Num 25, App(Var "f", Num 100))
             
-let e2 = Let("f", TyFn(TyInt,TyInt), Fn("y", TyInt, Binop(Sum, Var "y", Var "x")), e3)
+                          let e2 = Let("f", TyFn(TyInt,TyInt), Fn("y", TyInt, Binop(Sum, Var "y", Var "x")), e3)
             
-let tst3 = Let("x", TyInt, Num 10, e2) 
+                          let tst3 = Let("x", TyInt, Num 10, e2) 
     
   
 
@@ -571,24 +574,24 @@ sem açucar sintático:
      
 do tipo int avalia para  81
 
-*)          
+                          *)          
 
-let ymenos1 = Binop(Sub, Var "y", Num 1)     (* y - 1  *)
+                          let ymenos1 = Binop(Sub, Var "y", Num 1)     (* y - 1  *)
   
-let powapp  =   App(App(Var "pow", Var "x"), ymenos1)   (* (pow x)  (y-1) *)
+                          let powapp  =   App(App(Var "pow", Var "x"), ymenos1)   (* (pow x)  (y-1) *)
                                            
-let xpow =   Binop(Mult, Var "x", powapp)    (*   x * (pow x (y-1))   *)
+                          let xpow =   Binop(Mult, Var "x", powapp)    (*   x * (pow x (y-1))   *)
       
     (* fn y:int => if y=0 then 1 else x * (pow x (y-1))    *) 
-let ebdy = Fn("y",
-              TyInt,
-              If(Binop(Eq, Var "y", Num 0) , Num 1, xpow))  
+                          let ebdy = Fn("y",
+                                        TyInt,
+                                        If(Binop(Eq, Var "y", Num 0) , Num 1, xpow))  
   
-let pow = 
-  LetRec("pow", 
-         TyFn(TyInt, TyFn(TyInt,TyInt)), (* pow: int --> int --> int*)
-         Fn("x", TyInt, ebdy),           (* fn x: int => ebdy  *)
-         App(App(Var "pow", Num 3), Num 4)) (* in  (pow 3) 4    *)
+                          let pow = 
+                            LetRec("pow", 
+                                   TyFn(TyInt, TyFn(TyInt,TyInt)), (* pow: int --> int --> int*)
+                                   Fn("x", TyInt, ebdy),           (* fn x: int => ebdy  *)
+                                   App(App(Var "pow", Num 3), Num 4)) (* in  (pow 3) 4    *)
                                             
                                             
   
@@ -597,11 +600,11 @@ let pow =
         do tipo int avalia para 6   *)
 
 
-let dobro = Fn("y", TyInt, Binop(Mult, Var "y", Num 2)) 
+                          let dobro = Fn("y", TyInt, Binop(Mult, Var "y", Num 2)) 
     
-let inc = Fn("y", TyInt, Binop(Sum, Var "y", Num 1)) 
+                          let inc = Fn("y", TyInt, Binop(Sum, Var "y", Num 1)) 
 
-let pipe1 =     Pipe(Num 5, inc)
+                          let pipe1 =     Pipe(Num 5, inc)
     
     (* inc (inc (dobro (dobro (inc (inc (inc 5))))))  =  34     
                                                               
@@ -609,9 +612,11 @@ let pipe1 =     Pipe(Num 5, inc)
      
       do tipo int avalia para 34 *)
     
-let pipe2 =  
-  Pipe(Pipe(Pipe(Pipe(Pipe(Pipe(Pipe(Num 5, inc), inc), inc), dobro),dobro), inc) , inc)
+                          let pipe2 =  
+                            Pipe(Pipe(Pipe(Pipe(Pipe(Pipe(Pipe(Num 5, inc), inc), inc), dobro),dobro), inc) , inc)
     
     (*  $ ( 6 = (5 |> inc),  pow 3 4)    é do tipo int e  avalia para 80 
+                          *)
+                          let tst_dolar  = Dolar(Binop(Eq, Num 20, pipe1), pow)
+
 *)
-let tst_dolar  = Dolar(Binop(Eq, Num 20, pipe1), pow)
