@@ -57,7 +57,10 @@ type expr =
   | Skip
 
             
+ (* Definindo o loc, para o TrabFinal *) 
+  
 
+  
   
  (* ambiente de tipo, valores e ambiente de execução *)              
 
@@ -260,16 +263,17 @@ let rec typeinfer (tenv:tenv) (e:expr) : tipo =
 
 (* Adicoes do professor*)
 
-type store = (loc * valor) list
+type store = (valor * valor) list
 
 (*Usado por Deref e *)
 
-let rec lookup_store s l =
-  match s with
-    [] -> None
-  | (l', v) :: pairs -> if l=l' then Some v else lookup_store pairs laco
+    (*
+      let rec lookup_store s l =
+        match s with
+          [] -> None
+        | (l', v) :: pairs -> if l=l' then Some v else lookup_store pairs laco
 
-
+*)
 (* Usado por Asg(e1,e2) *)
 
 let update_store s (l,v) =
@@ -283,7 +287,7 @@ let update_store s (l,v) =
   update_store' [] s (l,v)
 
 
-type store = (loc * valor) list
+type store = (valor * valor) list
 
 
 let rec compute (oper: op) (v1: valor) (v2: valor) : valor =
@@ -429,7 +433,7 @@ let rec eval (renv:renv) (e:expr) : valor =
   | New (e1) ->
       let (v1,s1) = eval renv (e1, s) in
       (match s1 with
-         [] -> (Vloc, (/,v1)::s1)
+         [] -> (Vloc, (v1)::s1)
        | (l,v) :: pairs ->
            let lnew = l (*???*) in
            (Vloc lnew, (lnew, v1) :: s1))
@@ -555,15 +559,15 @@ let tst3 = Let("x", TyInt, Num 10, e2)
 
   (*   com acúcar sintático:
 
-   let rec pow (x:int) (y:int) : int = 
-                  if y = 0 then 1 else x * (pow x (y-1))  
+let rec pow (x:int) (y:int) : int = 
+  if y = 0 then 1 else x * (pow x (y-1))  
 in (pow 3) 4 
      
-  sem açucar sintático:
+sem açucar sintático:
 
-     let rec pow: int -> (int --> int) = 
-       fn x:int => fn y:int => if y = 0 then 1 else x * (pow x (y-1)) 
-     in (pow 3) 4 
+  let rec pow: int -> (int --> int) = 
+    fn x:int => fn y:int => if y = 0 then 1 else x * (pow x (y-1)) 
+  in (pow 3) 4 
      
 do tipo int avalia para  81
 
@@ -611,4 +615,3 @@ let pipe2 =
     (*  $ ( 6 = (5 |> inc),  pow 3 4)    é do tipo int e  avalia para 80 
 *)
 let tst_dolar  = Dolar(Binop(Eq, Num 20, pipe1), pow)
-    
