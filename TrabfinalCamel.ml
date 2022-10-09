@@ -24,10 +24,6 @@ type tipo =
   | TyRef of tipo
   | TyUnit            
     
-
-(* expressões da linguagem L1 do Trabalho Final *)   
-type loc = TyInt
-  
 (* expressões da linguagem L1 *)
 type ident = string 
 
@@ -50,6 +46,7 @@ type expr =
   | Question of expr * expr * expr
   | Pipe of expr * expr 
         (* extensoes do trabalho *) 
+  | Loc of int
   | Asg of expr * expr
   | Dref of expr
   | New of expr
@@ -57,15 +54,14 @@ type expr =
   | Whl of expr * expr
   | Skip
 
-            
-(* Definindo o loc, para o TrabFinal *) 
-
+type loc = TyInt
   
 (* ambiente de tipo, valores e ambiente de execução *)              
 type tenv = (ident * tipo) list
     
 type valor =
     VNum of int
+  | VLoc of int
   | VBool of bool
   | VPair of valor * valor
   | VClos  of ident * expr * renv
@@ -218,15 +214,15 @@ let rec typeinfer (tenv:tenv) (e:expr) : tipo =
       let t1 = typeinfer tenv e1 in
       let t2 = typeinfer tenv e2 in 
       (match t1 with 
-         TyRef(t) -> if t = t2 then TyUnit else raise (TypeError "tipo do LHS e RHS diferentes ")   
-       | _ -> raise (TypeError "Lado esquerdo da atribuicao nao eh do tipo ref" ))
+         TyRef(t) -> if t = t2 then TyUnit else raise (TypeError "asg")   
+       | _ -> raise (TypeError "asg2" ))
 
   (* Dref *)
   | Dref (e1) ->
       let t1 = typeinfer tenv e1 in 
       (match t1 with
          TyRef t -> t
-       | _ -> raise (TypeError "Operando de DRef nao eh do tipo ref" ))
+       | _ -> raise (TypeError "dref" ))
 
   (* New *)
   | New (e1) ->
@@ -238,7 +234,7 @@ let rec typeinfer (tenv:tenv) (e:expr) : tipo =
       let t1 = typeinfer tenv e1 in
       let t2 = typeinfer tenv e2 in 
       if t1 = TyUnit then t2
-      else raise (TypeError "tipo do LHS e RHS diferentes") 
+      else raise (TypeError "seq") 
 
   (* Whl *)
   | Whl (e1,e2) -> 
@@ -246,8 +242,8 @@ let rec typeinfer (tenv:tenv) (e:expr) : tipo =
       let t2 = typeinfer tenv e2 in 
       if t1 = TyBool then
         if t2 = TyUnit then TyUnit
-        else raise (TypeError "Expressao do While nao eh do tipo Unit")
-      else raise (TypeError "Condicao do laco nao eh bool")
+        else raise (TypeError "whl")
+      else raise (TypeError "whl2")
 
   (* Skip *)
   | Skip -> TyUnit
@@ -257,13 +253,13 @@ let rec typeinfer (tenv:tenv) (e:expr) : tipo =
 (*                 AVALIADOR                *)
 (*++++++++++++++++++++++++++++++++++++++++++*)
 
-(* Store e funcoes *)
-type store = (valor * valor) list
+(* store e funcoes *)
+type store = (loc * valor) list
 
 let rec lookup_store s l =
   match s with
     [] -> None
-  | (l', v) :: pairs -> if l=l' then Some v else lookup_store pairs laco
+  | (l', v) :: rest -> if l=l' then Some v else lookup_store rest l
 
 let update_store s (l,v) =
   let rec update_store' front s (l,v) : store option =
@@ -430,7 +426,7 @@ let rec eval (renv:renv) (e:expr) : valor =
       (match v1 with
          Vloc l ->
            (match update_store s2 (l,v2) with 
-              None -> failwith ("Erro na atribuicao: endereco " (*??*) )
+              None -> failwith ("erro avaliador asg" )
             | Some s3 -> (VSkip, s3))
        | _ -> raise BugTypeInfer)
 
