@@ -20,16 +20,15 @@ type tipo =
   | TyBool
   | TyFn of tipo * tipo
   | TyPair of tipo * tipo 
-        (* tipos do Trabalho Final, iguais ao do professor *)      
+        (* extensoes do trabalho *)     
   | TyRef of tipo
   | TyUnit            
     
-    (* expressões da linguagem L1 do Trabalho Final *)   
 
+(* expressões da linguagem L1 do Trabalho Final *)   
 type loc = TyInt
   
 (* expressões da linguagem L1 *)
-
 type ident = string 
 
 type op = Sum | Sub | Mult | Eq | Gt | Lt | Geq | Leq
@@ -47,11 +46,10 @@ type expr =
   | App of expr * expr
   | Let of ident * tipo * expr * expr
   | LetRec of ident * tipo * expr  * expr
-                (* extensoes *) 
   | Dolar of expr * expr 
   | Question of expr * expr * expr
   | Pipe of expr * expr 
-            (* Novas expressoes do Trabalho Final, iguais as do prof *) 
+        (* extensoes do trabalho *) 
   | Asg of expr * expr
   | Dref of expr
   | New of expr
@@ -60,13 +58,10 @@ type expr =
   | Skip
 
             
- (* Definindo o loc, para o TrabFinal *) 
-  
+(* Definindo o loc, para o TrabFinal *) 
 
   
-  
- (* ambiente de tipo, valores e ambiente de execução *)              
-
+(* ambiente de tipo, valores e ambiente de execução *)              
 type tenv = (ident * tipo) list
     
 type valor =
@@ -79,9 +74,7 @@ and
   renv = (ident * valor) list 
   
  
-    (* funções de busca e de atualizaçã o de ambintes *)   
-
-
+(* funções de busca e de atualizacao o de ambintes *)
 let rec lookup a k  =
   match a with
     [] -> None
@@ -190,16 +183,16 @@ let rec typeinfer (tenv:tenv) (e:expr) : tipo =
       else raise (TypeError "tipo da funcao diferente do declarado")
           
   | LetRec _ -> raise BugParser
-                  
-                  (* extensões *)
 
+  (* Dolar *)
   | Dolar(e1,e2) ->  
       let t1 = typeinfer tenv e1 in
       let t2 = typeinfer tenv e2 in 
       (match (t1, t2) with 
          (TyBool, TyInt) -> TyInt
        | _ -> raise (TypeError "pelo menos 1 dos operandos do operador $ está mal tipado" ))
-                       
+                  
+  (* ? *)
   | Question(e1,e2,e3) ->
       let t1 = typeinfer tenv e1 in
       let t2 = typeinfer tenv e2 in
@@ -208,7 +201,7 @@ let rec typeinfer (tenv:tenv) (e:expr) : tipo =
          (TyInt, TyBool, TyBool) -> TyBool
        | _ -> raise (TypeError "pelo menos 1 dos operandos do operador ? está mal tipado" ))
     
-    
+  (* Pipe *)
   | Pipe(e1,e2) -> 
       let t1 = typeinfer tenv e1 in
       let t2 = typeinfer tenv e2 in 
@@ -219,8 +212,8 @@ let rec typeinfer (tenv:tenv) (e:expr) : tipo =
        | _ -> raise (TypeError "1.o operando do pipe não é do tipo esperado pelo 2.o operando do pipe" ))
       
 
-  (* extensões Trabalho Final, iguais as do prof *)
-       
+  (* extensoes do trabalho *) 
+  (* Asg *)
   | Asg(e1,e2) -> 
       let t1 = typeinfer tenv e1 in
       let t2 = typeinfer tenv e2 in 
@@ -228,26 +221,26 @@ let rec typeinfer (tenv:tenv) (e:expr) : tipo =
          TyRef(t) -> if t = t2 then TyUnit else raise (TypeError "tipo do LHS e RHS diferentes ")   
        | _ -> raise (TypeError "Lado esquerdo da atribuicao nao eh do tipo ref" ))
 
-
+  (* Dref *)
   | Dref (e1) ->
       let t1 = typeinfer tenv e1 in 
       (match t1 with
          TyRef t -> t
        | _ -> raise (TypeError "Operando de DRef nao eh do tipo ref" ))
 
-
+  (* New *)
   | New (e1) ->
       let t1 = typeinfer tenv e1 in 
       TyRef(t1)    
 
-
+  (* Seq *)
   | Seq (e1,e2) -> 
       let t1 = typeinfer tenv e1 in
       let t2 = typeinfer tenv e2 in 
       if t1 = TyUnit then t2
       else raise (TypeError "tipo do LHS e RHS diferentes") 
 
-
+  (* Whl *)
   | Whl (e1,e2) -> 
       let t1 = typeinfer tenv e1 in
       let t2 = typeinfer tenv e2 in 
@@ -256,7 +249,7 @@ let rec typeinfer (tenv:tenv) (e:expr) : tipo =
         else raise (TypeError "Expressao do While nao eh do tipo Unit")
       else raise (TypeError "Condicao do laco nao eh bool")
 
-
+  (* Skip *)
   | Skip -> TyUnit
   
   
@@ -264,20 +257,13 @@ let rec typeinfer (tenv:tenv) (e:expr) : tipo =
 (*                 AVALIADOR                *)
 (*++++++++++++++++++++++++++++++++++++++++++*)
 
-(* Adicoes do professor*)
-
+(* Store e funcoes *)
 type store = (valor * valor) list
 
-(*Usado por Deref e *)
-
-    (*
-      let rec lookup_store s l =
-        match s with
-          [] -> None
-        | (l', v) :: pairs -> if l=l' then Some v else lookup_store pairs laco
-
-*)
-(* Usado por Asg(e1,e2) *)
+let rec lookup_store s l =
+  match s with
+    [] -> None
+  | (l', v) :: pairs -> if l=l' then Some v else lookup_store pairs laco
 
 let update_store s (l,v) =
   let rec update_store' front s (l,v) : store option =
@@ -288,9 +274,6 @@ let update_store s (l,v) =
         then Some (front @ ((l,v) :: pairs)) 
         else update_store' ((l',v') :: front) pairs (l,v) in
   update_store' [] s (l,v)
-
-
-type store = (valor * valor) list
 
 
 let rec compute (oper: op) (v1: valor) (v2: valor) : valor =
@@ -375,8 +358,6 @@ let rec eval (renv:renv) (e:expr) : valor =
         
         
   | LetRec _ -> raise BugParser 
-                  
-                  (* extensões *)
 
   | Dolar(e1,e2) -> 
       let v1 = eval renv e1 in
@@ -408,8 +389,9 @@ let rec eval (renv:renv) (e:expr) : valor =
        | _ -> raise BugTypeInfer) 
 
 
-  (* extensões Trabalho Final, iguais as do prof *)
+  (* extensoes do trabalho *)
 
+  (* Seq *)
   | Seq (e1,e2) ->
       let (v1,s1) = eval renv (e1,s) in
       let (v2,s2) = eval renv (e2,s1) in
@@ -417,7 +399,7 @@ let rec eval (renv:renv) (e:expr) : valor =
          VSkip -> (v2,s2)
        | _ -> raise BugTypeInfer)
 
-  
+  (* Whl *)
   | Whl (e1, e2) ->
       let (v1,s1) = eval renv (e1,s) in
       (match v1 with
@@ -429,10 +411,10 @@ let rec eval (renv:renv) (e:expr) : valor =
             | _ -> raise BugTypeInfer)
        | _ -> raise BugTypeInfer)
 
-
+  (* Skip *)
   | Skip -> (VSkip, s)
 
-
+  (* New *)
   | New (e1) ->
       let (v1,s1) = eval renv (e1, s) in
       (match s1 with
@@ -441,7 +423,7 @@ let rec eval (renv:renv) (e:expr) : valor =
            let lnew = l (*???*) in
            (Vloc lnew, (lnew, v1) :: s1))
 
-
+  (* Asg *)
   | Asg (e1,e2) ->
       let (v1,s1) = eval renv (e1,s) in
       let (v2,s2) = eval renv (e2, s1) in
@@ -452,7 +434,7 @@ let rec eval (renv:renv) (e:expr) : valor =
             | Some s3 -> (VSkip, s3))
        | _ -> raise BugTypeInfer)
 
-
+  (* Dref *)
   | Dref (e1) ->
       let (v1,s1) = eval renv (e1,s) in
       (match v1 with
@@ -464,7 +446,6 @@ let rec eval (renv:renv) (e:expr) : valor =
 
                   
 (* função auxiliar que converte tipo para string *)
-
 let rec ttos (t:tipo) : string =
   match t with
     TyInt  -> "int"
@@ -473,7 +454,6 @@ let rec ttos (t:tipo) : string =
   | TyPair(t1,t2) ->  "("  ^ (ttos t1) ^ " * "   ^ (ttos t2) ^ ")"
 
 (* função auxiliar que converte valor para string *)
-
 let rec vtos (v: valor) : string =
   match v with
     VNum n -> string_of_int n
@@ -484,9 +464,6 @@ let rec vtos (v: valor) : string =
   | VRclos _ -> "fn"
 
 (* principal do interpretador *)
-
-(*Igual ao do prof*)
-
 let emptystore = []
 
 let int_bse (e:expr) : unit =
@@ -502,7 +479,7 @@ let int_bse (e:expr) : unit =
   | BugParser     ->  print_string "corrigir bug no parser para let rec"
                         
 
-                        (*
+ (*
 
  (* +++++++++++++++++++++++++++++++++++++++*)
  (*                TESTES                  *)
